@@ -2,9 +2,8 @@ name: Docker Hub DB
 
 on:
   push:
-    branches: ["deploy"]
-    paths:
-      - "db/**"
+    branches:
+      - deploy
   workflow_dispatch:
 
 permissions:

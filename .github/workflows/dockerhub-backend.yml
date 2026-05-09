@@ -2,9 +2,8 @@ name: Docker Hub Backend
 
 on:
   push:
-    branches: ["deploy"]
-    paths:
-      - "backend/**"
+    branches:
+      - deploy
   workflow_dispatch:
 
 permissions:
