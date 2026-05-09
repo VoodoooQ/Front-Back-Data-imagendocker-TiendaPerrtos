@@ -38,6 +38,12 @@ cp .env.example .env
 docker compose up --build
 ```
 
+## Proxy reverso del frontend (Nginx)
+El contenedor `frontend` usa Nginx para servir estáticos y actuar como reverse proxy:
+- El navegador consume `/api/productos` (ruta relativa).
+- Nginx redirige `/api/*` hacia el backend privado (por ejemplo `http://10.0.131.248:3001/api/`).
+- Así no se expone directamente la instancia Back al navegador.
+
 ## CI/CD simplificado
 1. Push a rama deploy.
 2. GitHub Actions detecta cambios por carpeta.

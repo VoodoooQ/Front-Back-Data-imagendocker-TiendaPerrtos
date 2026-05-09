@@ -2,10 +2,8 @@
  * Frontend simple para CRUD de productos de la tienda de perritos.
  */
 
-// Usa proxy Nginx por defecto (/api -> backend). Si despliegas sin proxy,
-// define window.__API_BASE__ en index.html o cambia esta constante.
-const API_BASE = window.__API_BASE__ || "/api/productos";
-// Ejemplo para EC2: window.__API_BASE__ = "http://IP_O_DNS_BACKEND:3001/api/productos";
+// El frontend consume una ruta relativa y Nginx resuelve el destino real.
+const API_URL = "/api/productos";
 
 
 let editandoId = null;
@@ -29,7 +27,7 @@ function setStatus(mensaje, tipo = "ok") {
 
 async function cargarProductos() {
   try {
-    const res = await fetch(API_BASE);
+    const res = await fetch(API_URL);
     if (!res.ok) throw new Error("Error al cargar productos");
     const data = await res.json();
     renderProductos(data);
@@ -115,14 +113,14 @@ async function guardarProducto() {
     let res;
     if (editandoId) {
       // Actualizar
-      res = await fetch(`${API_BASE}/${editandoId}`, {
+      res = await fetch(`${API_URL}/${editandoId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(producto),
       });
     } else {
       // Crear
-      res = await fetch(API_BASE, {
+      res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(producto),
@@ -145,7 +143,7 @@ async function guardarProducto() {
 
 async function editarProducto(id) {
   try {
-    const res = await fetch(`${API_BASE}/${id}`);
+    const res = await fetch(`${API_URL}/${id}`);
     if (!res.ok) throw new Error("No se pudo obtener el producto");
     const p = await res.json();
     editandoId = p.id;
@@ -163,7 +161,7 @@ async function editarProducto(id) {
 
 async function eliminarProducto(id) {
   try {
-    const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+    const res = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
     if (!res.ok) throw new Error("Error al eliminar producto");
     await cargarProductos();
     setStatus("Producto eliminado correctamente.", "ok");
