@@ -3,47 +3,39 @@ const cors = require("cors");
 const mysql = require("mysql2/promise");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-
-const {
-  DB_HOST = "10.0.2.134", // acá colocar la IP Privada EC2 DB
-  DB_USER = "root",
-  DB_PASSWORD = "admin123",
-  DB_NAME = "tienda_perritos",
-  DB_PORT = 3306,
-} = process.env;
+const PORT = Number(process.env.PORT) || 3001;
+const DB_HOST = process.env.DB_HOST || "db";
+const DB_USER = process.env.DB_USER || "tienda_user";
+const DB_PASSWORD = process.env.DB_PASSWORD || "change_me";
+const DB_NAME = process.env.DB_NAME || "tienda_perritos";
+const DB_PORT = Number(process.env.DB_PORT) || 3306;
 
 app.use(cors());
 app.use(express.json());
 
 let pool;
 
-// Inicializar pool de conexiones
 async function initDb() {
-  try {
-    pool = mysql.createPool({
-      host: DB_HOST,
-      user: DB_USER,
-      password: DB_PASSWORD,
-      database: DB_NAME,
-      port: DB_PORT,
-      waitForConnections: true,
-      connectionLimit: 10,
-      queueLimit: 0,
-    });
-    console.log("Pool de conexiones MySQL inicializado.");
-  } catch (err) {
-    console.error("Error al inicializar pool de MySQL:", err);
-  }
+  pool = mysql.createPool({
+    host: DB_HOST,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: DB_NAME,
+    port: DB_PORT,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+  });
+
+  await pool.query("SELECT 1");
+  console.log("Pool de conexiones MySQL inicializado.");
 }
 
-// Helper para manejar errores
 function handleError(res, error, message = "Error interno del servidor") {
   console.error(error);
   res.status(500).json({ message });
 }
 
-// Obtener todos los productos
 app.get("/api/productos", async (req, res) => {
   try {
     const [rows] = await pool.query("SELECT id, nombre, descripcion, precio, stock FROM productos ORDER BY id DESC");
@@ -53,7 +45,6 @@ app.get("/api/productos", async (req, res) => {
   }
 });
 
-// Obtener un producto por ID
 app.get("/api/productos/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -67,7 +58,6 @@ app.get("/api/productos/:id", async (req, res) => {
   }
 });
 
-// Crear un nuevo producto
 app.post("/api/productos", async (req, res) => {
   const { nombre, descripcion, precio, stock } = req.body;
 
@@ -88,7 +78,6 @@ app.post("/api/productos", async (req, res) => {
   }
 });
 
-// Actualizar un producto
 app.put("/api/productos/:id", async (req, res) => {
   const { id } = req.params;
   const { nombre, descripcion, precio, stock } = req.body;
@@ -114,7 +103,6 @@ app.put("/api/productos/:id", async (req, res) => {
   }
 });
 
-// Eliminar un producto
 app.delete("/api/productos/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -128,13 +116,20 @@ app.delete("/api/productos/:id", async (req, res) => {
   }
 });
 
-// Endpoint de salud
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Backend de tienda de perritos en ejecución." });
 });
 
-// Iniciar servidor
-app.listen(PORT, async () => {
-  console.log(`Servidor backend escuchando en puerto ${PORT}`);
-  await initDb();
-});
+async function startServer() {
+  try {
+    await initDb();
+    app.listen(PORT, () => {
+      console.log(`Servidor backend escuchando en puerto ${PORT}`);
+    });
+  } catch (err) {
+    console.error("No fue posible iniciar backend por error de base de datos:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
